@@ -1,6 +1,9 @@
 package kirok.querydsl;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import javax.persistence.EntityManager;
 import kirok.querydsl.entity.Hello;
 import kirok.querydsl.entity.QHello;
 import org.junit.jupiter.api.Test;
@@ -8,16 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-
 @SpringBootTest
 @Transactional
 class QuerydslApplicationTests {
 
-    @Autowired EntityManager em;
+    @Autowired
+    EntityManager em;
 
     @Test
     void contextLoads() {
@@ -25,7 +24,7 @@ class QuerydslApplicationTests {
         em.persist(hello);
 
         JPAQueryFactory query = new JPAQueryFactory(em);
-//        QHello qHello = new QHello("h");
+        //        QHello qHello = new QHello("h");
         QHello qHello = QHello.hello;
 
         Hello result = query.selectFrom(qHello).fetchOne();
