@@ -683,6 +683,62 @@ public class QuerydslBasicTest {
         queryFactory.delete(member).where(member.age.gt(10)).execute();
 
     }
-    
+
+    @Test
+    public void sqlFunction() {
+
+        List<Tuple> fetch = queryFactory.select(
+            Expressions.stringTemplate(
+                "function('replace', {0}, {1}, {2})",
+                member.username,
+                "member",
+                "M"),
+            member.username,
+            member.age
+        )
+            .from(member)
+            .fetch();
+
+        for (Tuple s : fetch) {
+            System.out.println("s = " + s);
+        }
+    }
+
+
+    @Test
+    public void sqlFunction2() {
+
+        List<Tuple> fetch = queryFactory
+            .select(
+                Expressions.stringTemplate("function('upper', {0})", member.username),
+                member.username,
+                member.age)
+            .from(member)
+            .where(member.username
+                .eq(Expressions.stringTemplate("function('lower', {0})", member.username)))
+            .fetch();
+
+        for (Tuple tuple : fetch) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
+
+    @Test
+    public void sqlFunction3() {
+
+        List<Tuple> fetch = queryFactory
+            .select(
+                member.username.upper(),
+                member.username,
+                member.age)
+            .from(member)
+            .where(member.username
+                .eq(member.username.lower()))
+            .fetch();
+
+        for (Tuple tuple : fetch) {
+            System.out.println("tuple = " + tuple);
+        }
+    }
 
 }
