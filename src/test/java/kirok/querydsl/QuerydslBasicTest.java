@@ -1,5 +1,9 @@
 package kirok.querydsl;
 
+import static com.querydsl.core.types.ExpressionUtils.as;
+import static com.querydsl.core.types.Projections.bean;
+import static com.querydsl.core.types.Projections.constructor;
+import static com.querydsl.core.types.Projections.fields;
 import static com.querydsl.jpa.JPAExpressions.select;
 import static kirok.querydsl.entity.QMember.member;
 import static kirok.querydsl.entity.QTeam.team;
@@ -9,11 +13,15 @@ import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceUnit;
+import kirok.querydsl.dto.MemberDto;
+import kirok.querydsl.dto.QMemberDto;
+import kirok.querydsl.dto.UserDto;
 import kirok.querydsl.entity.Member;
 import kirok.querydsl.entity.QMember;
 import kirok.querydsl.entity.Team;
@@ -438,5 +446,134 @@ public class QuerydslBasicTest {
             System.out.println("s = " + s);
         }
     }
+
+    @Test
+    public void simpleProjection() {
+        List<String> fetch = queryFactory.select(member.username).from(member).fetch();
+
+        List<Member> fetch1 = queryFactory.select(member).from(member).fetch();
+
+        for (String s : fetch) {
+            System.out.println("s = " + s);
+        }
+
+        for (Member member1 : fetch1) {
+            System.out.println("member1 = " + member1);
+        }
+
+    }
+
+    @Test
+    public void tupleProjection() {
+
+        List<Tuple> fetch = queryFactory
+            .select(member.username, member.age)
+            .from(member)
+            .fetch();
+
+        for (Tuple tuple : fetch) {
+            String s = tuple.get(member.username);
+            Integer integer = tuple.get(member.age);
+        }
+
+
+    }
+
+    @Test
+    public void findByJPQLDto() {
+        List<MemberDto> resultList = em
+            .createQuery("select new kirok.querydsl.dto.MemberDto(m.username, m.age) from Member m",
+                MemberDto.class).getResultList();
+
+        for (MemberDto memberDto : resultList) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    public void findDtoBySetter() {
+
+        List<MemberDto> result = queryFactory
+            .select(bean(MemberDto.class, member.username, member.age))
+            .from(member).fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    public void findDtoByField() {
+
+        List<MemberDto> result = queryFactory
+            .select(fields(MemberDto.class, member.username, member.age))
+            .from(member).fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    public void findDtoByConstructor() {
+
+        List<MemberDto> result = queryFactory
+            .select(constructor(MemberDto.class, member.username, member.age))
+            .from(member).fetch();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    public void findUserDto() {
+
+        List<UserDto> result = queryFactory
+            .select(fields(UserDto.class, member.username.as("name"), member.age))
+            .from(member).fetch();
+
+        for (UserDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    public void findUserDtoSub() {
+        QMember memberSub = new QMember("memberSub");
+
+        List<UserDto> result = queryFactory
+            .select(
+                fields(
+                    UserDto.class,
+//                    member.username.as("name"),
+                    as(member.username, "name"),
+                    as(
+                        JPAExpressions.select(memberSub.age.max()).from(memberSub), "age")
+                ))
+            .from(member).fetch();
+
+        for (UserDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+
+    }
+
+    @Test
+    public void findDtoByQP() {
+
+        List<MemberDto> results = queryFactory.select(new QMemberDto(member.username, member.age))
+            .from(member).fetch();
+
+        for (MemberDto result : results) {
+            System.out.println("result = " + result);
+        }
+
+    }
+    
 
 }
