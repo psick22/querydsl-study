@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Commit;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -622,7 +623,6 @@ public class QuerydslBasicTest {
 
     private BooleanExpression usernameEq(String usernameCond) {
         return usernameCond != null ? member.username.eq(usernameCond) : null;
-
     }
 
     private BooleanExpression ageEq(Integer ageCond) {
@@ -630,9 +630,59 @@ public class QuerydslBasicTest {
     }
 
     private BooleanExpression allEq(String usernameCond, Integer ageCond) {
-
         return usernameEq(usernameCond).and(ageEq(ageCond));
+    }
+
+    @Test
+    @Commit
+    public void bulkUpdate() {
+        long count = queryFactory
+            .update(member)
+            .set(member.username, "비회원")
+            .where(member.age.lt(28))
+            .execute();
+
+        System.out.println("count = " + count);
+
+        List<Member> resultBeforeClear = queryFactory.selectFrom(member).fetch();
+
+        for (Member member : resultBeforeClear) {
+            System.out.println("resultBeforeClear = " + member);
+        }
+
+        em.flush();
+        em.clear();
+
+        List<Member> resultAfterClear = queryFactory.selectFrom(member).fetch();
+
+        for (Member member : resultAfterClear) {
+            System.out.println("resultAfterClear = " + member);
+        }
+
 
     }
+
+    @Test
+    public void bulkAdd() {
+
+        queryFactory.update(member).set(member.age, member.age.add(1)).execute();
+
+        queryFactory.update(member).set(member.age, member.age.subtract(1)).execute();
+
+        queryFactory.update(member).set(member.age, member.age.multiply(2)).execute();
+
+        queryFactory.update(member).set(member.age, member.age.divide(2)).execute();
+
+        queryFactory.update(member).set(member.age, member.age.mod(2)).execute();
+
+    }
+
+    @Test
+    public void bulkDelete() {
+
+        queryFactory.delete(member).where(member.age.gt(10)).execute();
+
+    }
+    
 
 }
